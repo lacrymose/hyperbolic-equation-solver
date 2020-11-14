@@ -80,6 +80,9 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
+    // array for parameters transition from the master to slaves
+    int params_storage[4];
+
     // processing and validating input values
     if (rank == MASTER_PROCESS) {
 
@@ -156,7 +159,46 @@ int main(int argc, char *argv[]) {
             MPI_Abort(MPI_COMM_WORLD, INVALID_PARAMETERS);
             exit(INVALID_PARAMETERS);
         }
+
+        params_storage[0] = param_x_bound;
+        params_storage[1] = param_y_bound;
+        params_storage[2] = param_z_bound;
+        params_storage[3] = param_nt;
     }
+
+    // receiving parameters from MASTER
+    // TODO beware of param_XXX_bound type changes as MPI_INT is strictly set
+    MPI_Bcast(params_storage, 4, MPI_INT, MASTER_PROCESS, MPI_COMM_WORLD);
+
+    param_x_bound = params_storage[0];
+    param_y_bound = params_storage[1];
+    param_z_bound = params_storage[2];
+    param_nt = params_storage[3];
+
+    // <test_code>
+    std::cout << "x=" << param_x_bound << std::endl <<
+                 "y=" << param_y_bound << std::endl <<
+                 "z=" << param_z_bound << std::endl <<
+                 "threads=" << param_nt << std::endl <<
+                 "in rank #" << rank << std::endl;
+
+    std::cout << "settings threads number to " << param_nt << " in process #" <<
+        rank << std::endl;
+    omp_set_num_threads(param_nt);
+
+    int accum = 0;
+    #pragma omp parallel for reduction(+: accum)
+    for (int i = 0; i < param_x_bound * param_y_bound * param_z_bound; ++i) {
+        if (i % 2) {
+            accum += i;
+        } else {
+            accum -= i;
+        }
+
+    }
+
+    std::cout << "accumulator = " << accum << std::endl;
+    // </test_code>
 
     MPI_Finalize();
     exit(0);
