@@ -8,9 +8,9 @@
 #include <stdio.h>
 
 // TODO change spacial parameters type to float with corresponding validation changes
-int param_x_bound = 1000;
-int param_y_bound = 1000;
-int param_z_bound = 1000;
+int param_x_bound = 100;
+int param_y_bound = 100;
+int param_z_bound = 100;
 int param_t_bound = 10;
 // steps number
 int param_steps = 100;
